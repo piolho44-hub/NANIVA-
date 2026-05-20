@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -94,6 +97,9 @@ fun JewelryAdminDashboard(viewModel: JewelryViewModel) {
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedItemForEdit by remember { mutableStateOf<JewelryItem?>(null) }
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
+
     // Navigation and screen container layout
     Scaffold(
         topBar = {
@@ -115,105 +121,145 @@ fun JewelryAdminDashboard(viewModel: JewelryViewModel) {
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
-                modifier = Modifier.navigationBarsPadding()
-            ) {
-                AppTab.values().forEach { tab ->
-                    val isSelected = currentTab == tab
-                    val icon = when (tab) {
-                        AppTab.DASHBOARD -> if (isSelected) Icons.Filled.Dashboard else Icons.Filled.Dashboard
-                        AppTab.CATALOG -> if (isSelected) Icons.Filled.Loyalty else Icons.Filled.Loyalty
-                        AppTab.NEW_SALE -> if (isSelected) Icons.Filled.AddShoppingCart else Icons.Filled.AddShoppingCart
-                        AppTab.REPORTS -> if (isSelected) Icons.Filled.BarChart else Icons.Filled.BarChart
+            if (!isTablet) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp,
+                    modifier = Modifier.navigationBarsPadding()
+                ) {
+                    AppTab.values().forEach { tab ->
+                        val isSelected = currentTab == tab
+                        val icon = when (tab) {
+                            AppTab.DASHBOARD -> if (isSelected) Icons.Filled.Dashboard else Icons.Filled.Dashboard
+                            AppTab.CATALOG -> if (isSelected) Icons.Filled.Loyalty else Icons.Filled.Loyalty
+                            AppTab.NEW_SALE -> if (isSelected) Icons.Filled.AddShoppingCart else Icons.Filled.AddShoppingCart
+                            AppTab.REPORTS -> if (isSelected) Icons.Filled.BarChart else Icons.Filled.BarChart
+                        }
+                        NavigationBarItem(
+                            selected = isSelected,
+                            onClick = { currentTab = tab },
+                            label = { Text(tab.label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            icon = { Icon(icon, contentDescription = tab.label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            modifier = Modifier.testTag("nav_tab_${tab.name.lowercase(Locale.ROOT)}")
+                        )
                     }
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { currentTab = tab },
-                        label = { Text(tab.label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                        icon = { Icon(icon, contentDescription = tab.label) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        modifier = Modifier.testTag("nav_tab_${tab.name.lowercase(Locale.ROOT)}")
-                    )
                 }
             }
         }
     ) { innerPadding ->
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Animate transition between screens
-            AnimatedContent(
-                targetState = currentTab,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-                label = "tab_transitions"
-            ) { tab ->
-                when (tab) {
-                    AppTab.DASHBOARD -> DashboardTabScreen(
-                        items = items,
-                        sales = sales,
-                        onNavigateToSale = { currentTab = AppTab.NEW_SALE },
-                        viewModel = viewModel
-                    )
-                    AppTab.CATALOG -> CatalogTabScreen(
-                        items = items,
-                        onAddItemClick = { showAddDialog = true },
-                        onEditItemClick = { selectedItemForEdit = it },
-                        viewModel = viewModel
-                    )
-                    AppTab.NEW_SALE -> NewSaleTabScreen(
-                        items = items,
-                        viewModel = viewModel,
-                        onSaleSuccess = { currentTab = AppTab.DASHBOARD }
-                    )
-                    AppTab.REPORTS -> ReportsTabScreen(
-                        items = items,
-                        sales = sales
-                    )
+            if (isTablet) {
+                NavigationRail(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    header = {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    },
+                    modifier = Modifier.fillMaxHeight()
+                ) {
+                    AppTab.values().forEach { tab ->
+                        val isSelected = currentTab == tab
+                        val icon = when (tab) {
+                            AppTab.DASHBOARD -> if (isSelected) Icons.Filled.Dashboard else Icons.Filled.Dashboard
+                            AppTab.CATALOG -> if (isSelected) Icons.Filled.Loyalty else Icons.Filled.Loyalty
+                            AppTab.NEW_SALE -> if (isSelected) Icons.Filled.AddShoppingCart else Icons.Filled.AddShoppingCart
+                            AppTab.REPORTS -> if (isSelected) Icons.Filled.BarChart else Icons.Filled.BarChart
+                        }
+                        NavigationRailItem(
+                            selected = isSelected,
+                            onClick = { currentTab = tab },
+                            label = { Text(tab.label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            icon = { Icon(icon, contentDescription = tab.label) },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            modifier = Modifier.testTag("nav_tab_${tab.name.lowercase(Locale.ROOT)}")
+                        )
+                    }
                 }
             }
 
-            // Dialogs
-            if (showAddDialog) {
-                AddItemDialog(
-                    onDismiss = { showAddDialog = false },
-                    onConfirm = { name, category, material, price, costPrice, stock, alert, sku, desc, imgUri ->
-                        viewModel.addItem(
-                            name = name,
-                            category = category,
-                            material = material,
-                            price = price,
-                            costPrice = costPrice,
-                            stockQuantity = stock,
-                            minStockAlert = alert,
-                            sku = sku,
-                            description = desc,
-                            imageUri = imgUri
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                // Animate transition between screens
+                AnimatedContent(
+                    targetState = currentTab,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                    label = "tab_transitions"
+                ) { tab ->
+                    when (tab) {
+                        AppTab.DASHBOARD -> DashboardTabScreen(
+                            items = items,
+                            sales = sales,
+                            onNavigateToSale = { currentTab = AppTab.NEW_SALE },
+                            viewModel = viewModel
                         )
-                        showAddDialog = false
+                        AppTab.CATALOG -> CatalogTabScreen(
+                            items = items,
+                            onAddItemClick = { showAddDialog = true },
+                            onEditItemClick = { selectedItemForEdit = it },
+                            viewModel = viewModel
+                        )
+                        AppTab.NEW_SALE -> NewSaleTabScreen(
+                            items = items,
+                            viewModel = viewModel,
+                            onSaleSuccess = { currentTab = AppTab.DASHBOARD }
+                        )
+                        AppTab.REPORTS -> ReportsTabScreen(
+                            items = items,
+                            sales = sales
+                        )
                     }
-                )
-            }
+                }
 
-            selectedItemForEdit?.let { item ->
-                EditItemDialog(
-                    item = item,
-                    onDismiss = { selectedItemForEdit = null },
-                    onConfirm = { updatedItem ->
-                        viewModel.updateItem(updatedItem)
-                        selectedItemForEdit = null
-                    }
-                )
+                // Dialogs
+                if (showAddDialog) {
+                    AddItemDialog(
+                        onDismiss = { showAddDialog = false },
+                        onConfirm = { name, category, material, price, costPrice, stock, alert, sku, desc, imgUri ->
+                            viewModel.addItem(
+                                name = name,
+                                category = category,
+                                material = material,
+                                price = price,
+                                costPrice = costPrice,
+                                stockQuantity = stock,
+                                minStockAlert = alert,
+                                sku = sku,
+                                description = desc,
+                                imageUri = imgUri
+                            )
+                            showAddDialog = false
+                        }
+                    )
+                }
+
+                selectedItemForEdit?.let { item ->
+                    EditItemDialog(
+                        item = item,
+                        onDismiss = { selectedItemForEdit = null },
+                        onConfirm = { updatedItem ->
+                            viewModel.updateItem(updatedItem)
+                            selectedItemForEdit = null
+                        }
+                    )
+                }
             }
         }
     }
@@ -415,8 +461,14 @@ fun DashboardTabScreen(
         }
 
         // Metrics Grid (2x2 Column Row equivalent)
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isTablet = configuration.screenWidthDp >= 600
+
+        if (isTablet) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 MetricCard(
                     title = "Vendas Hoje",
                     value = formatBRL(todayRevenue),
@@ -433,8 +485,6 @@ fun DashboardTabScreen(
                     color = Color(0xFF3F51B5),
                     modifier = Modifier.weight(1f)
                 )
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MetricCard(
                     title = "Alertas de Peças",
                     value = "${lowStockItems.size}",
@@ -451,6 +501,45 @@ fun DashboardTabScreen(
                     color = Color(0xFF10B981),
                     modifier = Modifier.weight(1f)
                 )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricCard(
+                        title = "Vendas Hoje",
+                        value = formatBRL(todayRevenue),
+                        subtext = "$todaySalesCount transações",
+                        icon = Icons.Filled.MonetizationOn,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Estoque Total",
+                        value = "$totalStockPieces un.",
+                        subtext = "${items.size} produtos",
+                        icon = Icons.Filled.Inventory2,
+                        color = Color(0xFF3F51B5),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MetricCard(
+                        title = "Alertas de Peças",
+                        value = "${lowStockItems.size}",
+                        subtext = "Com estoque baixo",
+                        icon = Icons.Filled.Warning,
+                        color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B) else Color(0xFF10B981),
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Faturamento Geral",
+                        value = formatBRL(sales.sumOf { it.totalPrice }),
+                        subtext = "${sales.size} vendas salvas",
+                        icon = Icons.Filled.TrendingUp,
+                        color = Color(0xFF10B981),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
 
@@ -469,168 +558,355 @@ fun DashboardTabScreen(
             Text("Registrar Nova Venda Rápidamente", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         }
 
-        // Bar Chart section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(2.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Acompanhamento de Vendas Mensais",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Simulando faturamento no padrão da Nuvemshop",
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                CustomSalesBarChart(sales = sales)
-            }
-        }
-
-        // Category Sales Chart section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(2.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Vendas por Categoria",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Faturamento acumulado por categoria de item (do maior para o menor)",
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                CategorySalesChart(sales = sales)
-            }
-        }
-
-        // Low stock dynamic alerts
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+        if (isTablet) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Left Column (Charts)
+                Column(
+                    modifier = Modifier.weight(1.1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = "Atenção ao Estoque Baixo",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(100.dp),
-                        color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B).copy(alpha = 0.15f) else Color(0xFF10B981).copy(alpha = 0.15f)
+                    // Bar Chart section
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(2.dp)
                     ) {
-                        Text(
-                            text = if (lowStockItems.isNotEmpty()) "${lowStockItems.size} pendentes" else "Tudo em dia",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B) else Color(0xFF10B981),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Acompanhamento de Vendas Mensais",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Simulando faturamento no padrão da Nuvemshop",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            CustomSalesBarChart(sales = sales)
+                        }
+                    }
+
+                    // Category Sales Chart section
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Vendas por Categoria",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Faturamento acumulado por categoria de item (do maior para o menor)",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            CategorySalesChart(sales = sales)
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
 
-                if (lowStockItems.isEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                // Right Column (Low Stock Warnings)
+                Column(
+                    modifier = Modifier.weight(0.9f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Low stock dynamic alerts
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Icon(
-                            Icons.Filled.CheckCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Todas as peças possuem estoque suficiente!",
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        lowStockItems.take(3).forEach { item ->
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        MaterialTheme.colorScheme.background,
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(10.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.weight(1.3f)) {
+                                Text(
+                                    text = "Atenção ao Estoque Baixo",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(100.dp),
+                                    color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B).copy(alpha = 0.15f) else Color(0xFF10B981).copy(alpha = 0.15f)
+                                ) {
                                     Text(
-                                        item.name,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 13.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        "SKU: ${item.sku} | Estoque: ${item.stockQuantity}",
+                                        text = if (lowStockItems.isNotEmpty()) "${lowStockItems.size} pendentes" else "Tudo em dia",
                                         fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B) else Color(0xFF10B981),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            if (lowStockItems.isEmpty()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        Icons.Filled.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFF10B981),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Todas as peças possuem estoque suficiente!",
+                                        fontSize = 13.sp,
                                         color = MaterialTheme.colorScheme.secondary
                                     )
                                 }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    lowStockItems.take(5).forEach { item ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(
+                                                    MaterialTheme.colorScheme.background,
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .padding(10.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1.3f)) {
+                                                Text(
+                                                    item.name,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 13.sp,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    "SKU: ${item.sku} | Estoque: ${item.stockQuantity}",
+                                                    fontSize = 11.sp,
+                                                    color = MaterialTheme.colorScheme.secondary
+                                                )
+                                            }
+                                            Row(
+                                                modifier = Modifier.weight(0.7f),
+                                                horizontalArrangement = Arrangement.End,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                IconButton(
+                                                    onClick = {
+                                                        viewModel.updateItem(item.copy(stockQuantity = item.stockQuantity + 5))
+                                                    },
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .background(
+                                                            MaterialTheme.colorScheme.primaryContainer,
+                                                            CircleShape
+                                                        )
+                                                ) {
+                                                    Icon(
+                                                        Icons.Filled.Add,
+                                                        contentDescription = "Adicionar 5",
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    "+5 un.",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Bar Chart section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Acompanhamento de Vendas Mensais",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Simulando faturamento no padrão da Nuvemshop",
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    CustomSalesBarChart(sales = sales)
+                }
+            }
+
+            // Category Sales Chart section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Vendas por Categoria",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Faturamento acumulado por categoria de item (do maior para o menor)",
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    CategorySalesChart(sales = sales)
+                }
+            }
+
+            // Low stock dynamic alerts
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Atenção ao Estoque Baixo",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(100.dp),
+                            color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B).copy(alpha = 0.15f) else Color(0xFF10B981).copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = if (lowStockItems.isNotEmpty()) "${lowStockItems.size} pendentes" else "Tudo em dia",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (lowStockItems.isNotEmpty()) Color(0xFFF59E0B) else Color(0xFF10B981),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (lowStockItems.isEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                Icons.Filled.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Todas as peças possuem estoque suficiente!",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            lowStockItems.take(3).forEach { item ->
                                 Row(
-                                    modifier = Modifier.weight(0.7f),
-                                    horizontalArrangement = Arrangement.End,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            MaterialTheme.colorScheme.background,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Speed Restock Button
-                                    IconButton(
-                                        onClick = {
-                                            viewModel.updateItem(item.copy(stockQuantity = item.stockQuantity + 5))
-                                        },
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .background(
-                                                MaterialTheme.colorScheme.primaryContainer,
-                                                CircleShape
-                                            )
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.Add,
-                                            contentDescription = "Adicionar 5",
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(16.dp)
+                                    Column(modifier = Modifier.weight(1.3f)) {
+                                        Text(
+                                            item.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            "SKU: ${item.sku} | Estoque: ${item.stockQuantity}",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.secondary
                                         )
                                     }
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        "+5 un.",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                                    Row(
+                                        modifier = Modifier.weight(0.7f),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                viewModel.updateItem(item.copy(stockQuantity = item.stockQuantity + 5))
+                                            },
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.primaryContainer,
+                                                    CircleShape
+                                                )
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Add,
+                                                contentDescription = "Adicionar 5",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            "+5 un.",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -923,6 +1199,9 @@ fun CatalogTabScreen(
             }
 
             // Catalog list
+            val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+            val isTablet = configuration.screenWidthDp >= 600
+
             if (filteredItems.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -951,20 +1230,41 @@ fun CatalogTabScreen(
                     }
                 }
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(filteredItems, key = { it.id }) { item ->
-                        CatalogItemCard(
-                            item = item,
-                            onEditClick = { onEditItemClick(item) },
-                            onDeleteClick = { viewModel.deleteItem(item) },
-                            onStockChange = { delta ->
-                                val newQuantity = Math.max(0, item.stockQuantity + delta)
-                                viewModel.updateItem(item.copy(stockQuantity = newQuantity))
-                            }
-                        )
+                if (isTablet) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(filteredItems, key = { it.id }) { item ->
+                            CatalogItemCard(
+                                item = item,
+                                onEditClick = { onEditItemClick(item) },
+                                onDeleteClick = { viewModel.deleteItem(item) },
+                                onStockChange = { delta ->
+                                    val newQuantity = Math.max(0, item.stockQuantity + delta)
+                                    viewModel.updateItem(item.copy(stockQuantity = newQuantity))
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(filteredItems, key = { it.id }) { item ->
+                            CatalogItemCard(
+                                item = item,
+                                onEditClick = { onEditItemClick(item) },
+                                onDeleteClick = { viewModel.deleteItem(item) },
+                                onStockChange = { delta ->
+                                    val newQuantity = Math.max(0, item.stockQuantity + delta)
+                                    viewModel.updateItem(item.copy(stockQuantity = newQuantity))
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -1282,493 +1582,993 @@ fun NewSaleTabScreen(
             )
         }
 
-        // Product Search and Selector
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("1. Selecione as Joias", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isTablet = configuration.screenWidthDp >= 600
 
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = searchItemQuery,
-                        onValueChange = {
-                            searchItemQuery = it
-                            expandedDropdown = true
-                        },
-                        placeholder = { Text("Buscar joias por nome ou SKU...") },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        trailingIcon = {
-                            IconButton(onClick = { expandedDropdown = !expandedDropdown }) {
-                                Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-                            }
-                        },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("sale_product_field"),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    DropdownMenu(
-                        expanded = expandedDropdown,
-                        onDismissRequest = { expandedDropdown = false },
-                        modifier = Modifier.fillMaxWidth(0.9f)
+        if (isTablet) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Left Column (Selections)
+                Column(
+                    modifier = Modifier.weight(1.1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Product Search and Selector
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        if (dropdownItems.isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text("Nenhuma joia encontrada no estoque") },
-                                onClick = {}
-                            )
-                        } else {
-                            dropdownItems.forEach { item ->
-                                val cannotSell = item.stockQuantity == 0
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.weight(1.3f)
-                                            ) {
-                                                if (item.imageUri != null) {
-                                                    AsyncImage(
-                                                        model = item.imageUri,
-                                                        contentDescription = item.name,
-                                                        contentScale = ContentScale.Crop,
-                                                        modifier = Modifier
-                                                            .size(32.dp)
-                                                            .clip(RoundedCornerShape(4.dp))
-                                                    )
-                                                } else {
-                                                    Surface(
-                                                        shape = RoundedCornerShape(4.dp),
-                                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                                        modifier = Modifier.size(32.dp)
-                                                    ) {
-                                                        Box(contentAlignment = Alignment.Center) {
-                                                            Icon(
-                                                                Icons.Filled.Diamond,
-                                                                contentDescription = null,
-                                                                tint = MaterialTheme.colorScheme.primary,
-                                                                modifier = Modifier.size(16.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Column {
-                                                    Text(
-                                                        item.name,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        fontSize = 13.sp,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                    Text(
-                                                        formatBRL(item.price),
-                                                        fontSize = 11.sp,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
-                                                }
-                                            }
-                                            Text(
-                                                text = if (cannotSell) "Esgotado" else "${item.stockQuantity} un.",
-                                                fontSize = 12.sp,
-                                                color = if (cannotSell) Color(0xFFEF4444) else MaterialTheme.colorScheme.secondary,
-                                                modifier = Modifier.weight(0.7f),
-                                                textAlign = TextAlign.End
-                                            )
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("1. Selecione as Joias", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedTextField(
+                                    value = searchItemQuery,
+                                    onValueChange = {
+                                        searchItemQuery = it
+                                        expandedDropdown = true
+                                    },
+                                    placeholder = { Text("Buscar joias por nome ou SKU...") },
+                                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                                    trailingIcon = {
+                                        IconButton(onClick = { expandedDropdown = !expandedDropdown }) {
+                                            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
                                         }
                                     },
-                                    onClick = {
-                                        if (!cannotSell) {
-                                            val existingIndex = cartItems.indexOfFirst { it.item.id == item.id }
-                                            if (existingIndex >= 0) {
-                                                val existing = cartItems[existingIndex]
-                                                val newQty = Math.min(item.stockQuantity, existing.quantity + 1)
-                                                cartItems = cartItems.toMutableList().apply {
-                                                    set(existingIndex, existing.copy(quantity = newQty))
-                                                }
-                                            } else {
-                                                cartItems = cartItems + CartItem(item = item, quantity = 1, discount = 0.0)
-                                            }
-                                            searchItemQuery = ""
-                                            expandedDropdown = false
-                                        }
-                                    }
+                                    singleLine = true,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("sale_product_field"),
+                                    shape = RoundedCornerShape(12.dp)
                                 )
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
-        // Cart items view
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Itens do Pedido (${cartItems.size})", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    if (cartItems.isNotEmpty()) {
-                        TextButton(onClick = { cartItems = emptyList(); typedDiscounts.clear() }) {
-                            Text("Limpar Carrinho", color = Color(0xFFEF4444), fontSize = 12.sp)
-                        }
-                    }
-                }
-
-                if (cartItems.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.ShoppingBag,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "O carrinho está vazio",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Text(
-                            "Selecione joias acima para iniciar o pedido",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        cartItems.forEach { cartItem ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
-                                        RoundedCornerShape(12.dp)
-                                    )
-                                    .padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Miniature image thumbnail in place of icon
-                                if (cartItem.item.imageUri != null) {
-                                    AsyncImage(
-                                        model = cartItem.item.imageUri,
-                                        contentDescription = cartItem.item.name,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                    )
-                                } else {
-                                    Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                        modifier = Modifier.size(48.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                Icons.Filled.Diamond,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(24.dp)
+                                DropdownMenu(
+                                    expanded = expandedDropdown,
+                                    onDismissRequest = { expandedDropdown = false },
+                                    modifier = Modifier.fillMaxWidth(0.9f)
+                                ) {
+                                    if (dropdownItems.isEmpty()) {
+                                        DropdownMenuItem(
+                                            text = { Text("Nenhuma joia encontrada no estoque") },
+                                            onClick = {}
+                                        )
+                                    } else {
+                                        dropdownItems.forEach { item ->
+                                            val cannotSell = item.stockQuantity == 0
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.weight(1.3f)
+                                                        ) {
+                                                            if (item.imageUri != null) {
+                                                                AsyncImage(
+                                                                    model = item.imageUri,
+                                                                    contentDescription = item.name,
+                                                                    contentScale = ContentScale.Crop,
+                                                                    modifier = Modifier
+                                                                        .size(32.dp)
+                                                                        .clip(RoundedCornerShape(4.dp))
+                                                                )
+                                                            } else {
+                                                                Surface(
+                                                                    shape = RoundedCornerShape(4.dp),
+                                                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                                                    modifier = Modifier.size(32.dp)
+                                                                ) {
+                                                                    Box(contentAlignment = Alignment.Center) {
+                                                                        Icon(
+                                                                            Icons.Filled.Diamond,
+                                                                            contentDescription = null,
+                                                                            tint = MaterialTheme.colorScheme.primary,
+                                                                            modifier = Modifier.size(16.dp)
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                            Column {
+                                                                Text(
+                                                                    item.name,
+                                                                    fontWeight = FontWeight.SemiBold,
+                                                                    fontSize = 13.sp,
+                                                                    maxLines = 1,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
+                                                                Text(
+                                                                    formatBRL(item.price),
+                                                                    fontSize = 11.sp,
+                                                                    color = MaterialTheme.colorScheme.primary
+                                                                )
+                                                            }
+                                                        }
+                                                        Text(
+                                                            text = if (cannotSell) "Esgotado" else "${item.stockQuantity} un.",
+                                                            fontSize = 12.sp,
+                                                            color = if (cannotSell) Color(0xFFEF4444) else MaterialTheme.colorScheme.secondary,
+                                                            modifier = Modifier.weight(0.7f),
+                                                            textAlign = TextAlign.End
+                                                        )
+                                                    }
+                                                },
+                                                onClick = {
+                                                    if (!cannotSell) {
+                                                        val existingIndex = cartItems.indexOfFirst { it.item.id == item.id }
+                                                        if (existingIndex >= 0) {
+                                                            val existing = cartItems[existingIndex]
+                                                            val newQty = Math.min(item.stockQuantity, existing.quantity + 1)
+                                                            cartItems = cartItems.toMutableList().apply {
+                                                                set(existingIndex, existing.copy(quantity = newQty))
+                                                            }
+                                                        } else {
+                                                            cartItems = cartItems + CartItem(item = item, quantity = 1, discount = 0.0)
+                                                        }
+                                                        searchItemQuery = ""
+                                                        expandedDropdown = false
+                                                    }
+                                                }
                                             )
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
 
-                                Spacer(modifier = Modifier.width(10.dp))
+                    // Cart items view
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Itens do Pedido (${cartItems.size})", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                if (cartItems.isNotEmpty()) {
+                                    TextButton(onClick = { cartItems = emptyList(); typedDiscounts.clear() }) {
+                                        Text("Limpar Carrinho", color = Color(0xFFEF4444), fontSize = 12.sp)
+                                    }
+                                }
+                            }
 
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        cartItem.item.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                            if (cartItems.isEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.ShoppingBag,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(48.dp)
                                     )
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        "Material: ${cartItem.item.material}",
-                                        fontSize = 11.sp,
+                                        "O carrinho está vazio",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.secondary
                                     )
                                     Text(
-                                        "${formatBRL(cartItem.item.price)} un",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        "Selecione joias acima para iniciar o pedido",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.outline
                                     )
                                 }
-
-                                Column(
-                                    horizontalAlignment = Alignment.End,
-                                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    // Item trash action
-                                    IconButton(
-                                        onClick = {
-                                            cartItems = cartItems - cartItem
-                                            typedDiscounts.remove(cartItem.item.id)
-                                        },
-                                        modifier = Modifier.size(28.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.Delete,
-                                            contentDescription = "Remover do carrinho",
-                                            tint = Color(0xFFEF4444),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-
-                                    // Compact controller
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        IconButton(
-                                            onClick = {
-                                                if (cartItem.quantity > 1) {
-                                                    cartItems = cartItems.map {
-                                                        if (it.item.id == cartItem.item.id) it.copy(quantity = it.quantity - 1) else it
-                                                    }
-                                                }
-                                            },
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                                    cartItems.forEach { cartItem ->
+                                        Row(
                                             modifier = Modifier
-                                                .size(24.dp)
-                                                .background(MaterialTheme.colorScheme.background, CircleShape)
+                                                .fillMaxWidth()
+                                                .background(
+                                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                                                    RoundedCornerShape(12.dp)
+                                                )
+                                                .padding(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Icon(Icons.Filled.Remove, contentDescription = "Menos", modifier = Modifier.size(14.dp))
-                                        }
-
-                                        Text(
-                                            text = "${cartItem.quantity}",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            modifier = Modifier.width(20.dp),
-                                            textAlign = TextAlign.Center
-                                        )
-
-                                        IconButton(
-                                            onClick = {
-                                                if (cartItem.quantity < cartItem.item.stockQuantity) {
-                                                    cartItems = cartItems.map {
-                                                        if (it.item.id == cartItem.item.id) it.copy(quantity = it.quantity + 1) else it
+                                            if (cartItem.item.imageUri != null) {
+                                                AsyncImage(
+                                                    model = cartItem.item.imageUri,
+                                                    contentDescription = cartItem.item.name,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier
+                                                        .size(48.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                )
+                                            } else {
+                                                Surface(
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                    modifier = Modifier.size(48.dp)
+                                                ) {
+                                                    Box(contentAlignment = Alignment.Center) {
+                                                        Icon(
+                                                            Icons.Filled.Diamond,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.primary,
+                                                            modifier = Modifier.size(24.dp)
+                                                        )
                                                     }
-                                                }
-                                            },
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                                .background(MaterialTheme.colorScheme.background, CircleShape)
-                                        ) {
-                                            Icon(Icons.Filled.Add, contentDescription = "Mais", modifier = Modifier.size(14.dp))
-                                        }
-                                    }
-
-                                    // Compact Discount Input
-                                    val currentDiscountInput = typedDiscounts[cartItem.item.id] ?: if (cartItem.discount > 0.0) cartItem.discount.toString() else ""
-                                    OutlinedTextField(
-                                        value = currentDiscountInput,
-                                        onValueChange = { input ->
-                                            if (input.isEmpty() || input.toDoubleOrNull() != null) {
-                                                typedDiscounts[cartItem.item.id] = input
-                                                val discountVal = input.toDoubleOrNull() ?: 0.0
-                                                val maxAllowedDiscount = cartItem.item.price * cartItem.quantity
-                                                cartItems = cartItems.map {
-                                                    if (it.item.id == cartItem.item.id) {
-                                                        it.copy(discount = Math.min(maxAllowedDiscount, discountVal))
-                                                    } else it
                                                 }
                                             }
-                                        },
-                                        placeholder = { Text("Desc. R$", fontSize = 10.sp) },
-                                        singleLine = true,
-                                        textStyle = TextStyle(fontSize = 11.sp),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                        modifier = Modifier
-                                            .width(90.dp)
-                                            .height(44.dp),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                                        )
-                                    )
+
+                                            Spacer(modifier = Modifier.width(10.dp))
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    cartItem.item.name,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 13.sp,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    "Material: ${cartItem.item.material}",
+                                                    fontSize = 11.sp,
+                                                    color = MaterialTheme.colorScheme.secondary
+                                                )
+                                                Text(
+                                                    "${formatBRL(cartItem.item.price)} un",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+
+                                            Column(
+                                                horizontalAlignment = Alignment.End,
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                IconButton(
+                                                    onClick = {
+                                                        cartItems = cartItems - cartItem
+                                                        typedDiscounts.remove(cartItem.item.id)
+                                                    },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Filled.Delete,
+                                                        contentDescription = "Remover do carrinho",
+                                                        tint = Color(0xFFEF4444),
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    IconButton(
+                                                        onClick = {
+                                                            if (cartItem.quantity > 1) {
+                                                                cartItems = cartItems.map {
+                                                                    if (it.item.id == cartItem.item.id) it.copy(quantity = it.quantity - 1) else it
+                                                                }
+                                                            }
+                                                        },
+                                                        modifier = Modifier
+                                                            .size(24.dp)
+                                                            .background(MaterialTheme.colorScheme.background, CircleShape)
+                                                    ) {
+                                                        Icon(Icons.Filled.Remove, contentDescription = "Menos", modifier = Modifier.size(14.dp))
+                                                    }
+
+                                                    Text(
+                                                        text = "${cartItem.quantity}",
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 13.sp,
+                                                        modifier = Modifier.width(20.dp),
+                                                        textAlign = TextAlign.Center
+                                                    )
+
+                                                    IconButton(
+                                                        onClick = {
+                                                            if (cartItem.quantity < cartItem.item.stockQuantity) {
+                                                                cartItems = cartItems.map {
+                                                                    if (it.item.id == cartItem.item.id) it.copy(quantity = it.quantity + 1) else it
+                                                                }
+                                                            }
+                                                        },
+                                                        modifier = Modifier
+                                                            .size(24.dp)
+                                                            .background(MaterialTheme.colorScheme.background, CircleShape)
+                                                    ) {
+                                                        Icon(Icons.Filled.Add, contentDescription = "Mais", modifier = Modifier.size(14.dp))
+                                                    }
+                                                }
+
+                                                val currentDiscountInput = typedDiscounts[cartItem.item.id] ?: if (cartItem.discount > 0.0) cartItem.discount.toString() else ""
+                                                OutlinedTextField(
+                                                    value = currentDiscountInput,
+                                                    onValueChange = { input ->
+                                                        if (input.isEmpty() || input.toDoubleOrNull() != null) {
+                                                            typedDiscounts[cartItem.item.id] = input
+                                                            val discountVal = input.toDoubleOrNull() ?: 0.0
+                                                            val maxAllowedDiscount = cartItem.item.price * cartItem.quantity
+                                                            cartItems = cartItems.map {
+                                                                if (it.item.id == cartItem.item.id) {
+                                                                    it.copy(discount = Math.min(maxAllowedDiscount, discountVal))
+                                                                } else it
+                                                            }
+                                                        }
+                                                    },
+                                                    placeholder = { Text("Desc. R$", fontSize = 10.sp) },
+                                                    singleLine = true,
+                                                    textStyle = TextStyle(fontSize = 11.sp),
+                                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                                    modifier = Modifier
+                                                        .width(90.dp)
+                                                        .height(44.dp),
+                                                    colors = OutlinedTextFieldDefaults.colors(
+                                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        }
 
-        // Financial & Payment details Cards
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("2. Configurar Pagamento", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-
-                // Methods selector
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                // Right Column (Configurations & Summary)
+                Column(
+                    modifier = Modifier.weight(0.9f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    paymentOptions.forEach { method ->
-                        val isSelected = selectedPaymentMethod == method
-                        Surface(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { selectedPaymentMethod = method },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                            border = BorderStroke(1.dp, if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                        ) {
-                            Text(
-                                text = method,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = TextAlign.Center
-                            )
+                    // Financial & Payment details Cards
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("2. Configurar Pagamento", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                paymentOptions.forEach { method ->
+                                    val isSelected = selectedPaymentMethod == method
+                                    Surface(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable { selectedPaymentMethod = method },
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                        border = BorderStroke(1.dp, if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                    ) {
+                                        Text(
+                                            text = method,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(vertical = 10.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+
+                            Column(modifier = Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Canal de Vendas", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+
+                                if (isCustomSalesChannel) {
+                                    OutlinedTextField(
+                                        value = customSalesChannelText,
+                                        onValueChange = { customSalesChannelText = it },
+                                        label = { Text("Digitar Canal de Vendas") },
+                                        placeholder = { Text("Ex: TikTok Shop, Pinterest...") },
+                                        trailingIcon = {
+                                            IconButton(onClick = { isCustomSalesChannel = false }) {
+                                                Icon(Icons.Filled.Close, contentDescription = "Lista")
+                                            }
+                                        },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        items(salesChannels) { channel ->
+                                            val isSelected = selectedSalesChannel == channel
+                                            FilterChip(
+                                                selected = isSelected,
+                                                onClick = {
+                                                    if (channel == "+ Outro Canal") {
+                                                        isCustomSalesChannel = true
+                                                    } else {
+                                                        selectedSalesChannel = channel
+                                                    }
+                                                },
+                                                label = { Text(channel) },
+                                                leadingIcon = if (isSelected) {
+                                                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                                } else {
+                                                    null
+                                                },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                                    selectedLabelColor = MaterialTheme.colorScheme.primary
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                // Channel Picker
-                Column(modifier = Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Canal de Vendas", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    // Sales Checkout calculation Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Resumo do Pedido", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.primary)
 
-                    if (isCustomSalesChannel) {
-                        OutlinedTextField(
-                            value = customSalesChannelText,
-                            onValueChange = { customSalesChannelText = it },
-                            label = { Text("Digitar Canal de Vendas") },
-                            placeholder = { Text("Ex: TikTok Shop, Pinterest...") },
-                            trailingIcon = {
-                                IconButton(onClick = { isCustomSalesChannel = false }) {
-                                    Icon(Icons.Filled.Close, contentDescription = "Lista")
-                                }
-                            },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    } else {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            items(salesChannels) { channel ->
-                                val isSelected = selectedSalesChannel == channel
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = {
-                                        if (channel == "+ Outro Canal") {
-                                            isCustomSalesChannel = true
-                                        } else {
-                                            selectedSalesChannel = channel
-                                        }
-                                    },
-                                    label = { Text(channel) },
-                                    leadingIcon = if (isSelected) {
-                                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                    } else {
-                                        null
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                        selectedLabelColor = MaterialTheme.colorScheme.primary
-                                    )
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Subtotal", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+                                Text(formatBRL(subtotal), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                            }
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Desconto", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+                                Text("- " + formatBRL(totalDiscount), color = Color(0xFFEF4444), fontWeight = FontWeight.SemiBold)
+                            }
+
+                            Divider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), modifier = Modifier.padding(vertical = 4.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("VALOR TOTAL", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+                                Text(
+                                    formatBRL(total),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
                     }
+
+                    // Finalize transaction button
+                    Button(
+                        onClick = {
+                            if (cartItems.isNotEmpty()) {
+                                val finalSalesChannel = if (isCustomSalesChannel) customSalesChannelText.ifEmpty { "Outros" } else selectedSalesChannel
+                                viewModel.registerMultiItemSale(
+                                    itemsWithDetails = cartItems.map { Triple(it.item, it.quantity, it.discount) },
+                                    paymentMethod = selectedPaymentMethod,
+                                    salesChannel = finalSalesChannel
+                                )
+                                onSaleSuccess()
+                            }
+                        },
+                        enabled = cartItems.isNotEmpty() && total >= 0.0,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .testTag("submit_sale_button"),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Filled.CheckCircle, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Concluir e Emitir Venda", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-        }
+        } else {
+            // Mobile (Portrait standard vertical stacking)
+            // Product Search and Selector
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("1. Selecione as Joias", fontWeight = FontWeight.Bold, fontSize = 15.sp)
 
-        // Sales Checkout calculation Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Resumo do Pedido", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.primary)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = searchItemQuery,
+                            onValueChange = {
+                                searchItemQuery = it
+                                expandedDropdown = true
+                            },
+                            placeholder = { Text("Buscar joias por nome ou SKU...") },
+                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                            trailingIcon = {
+                                IconButton(onClick = { expandedDropdown = !expandedDropdown }) {
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                                }
+                            },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("sale_product_field"),
+                            shape = RoundedCornerShape(12.dp)
+                        )
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Subtotal", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-                    Text(formatBRL(subtotal), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                }
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Desconto", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-                    Text("- " + formatBRL(totalDiscount), color = Color(0xFFEF4444), fontWeight = FontWeight.SemiBold)
-                }
-
-                Divider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), modifier = Modifier.padding(vertical = 4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("VALOR TOTAL", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
-                    Text(
-                        formatBRL(total),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        DropdownMenu(
+                            expanded = expandedDropdown,
+                            onDismissRequest = { expandedDropdown = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            if (dropdownItems.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("Nenhuma joia encontrada no estoque") },
+                                    onClick = {}
+                                )
+                            } else {
+                                dropdownItems.forEach { item ->
+                                    val cannotSell = item.stockQuantity == 0
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.weight(1.3f)
+                                                ) {
+                                                    if (item.imageUri != null) {
+                                                        AsyncImage(
+                                                            model = item.imageUri,
+                                                            contentDescription = item.name,
+                                                            contentScale = ContentScale.Crop,
+                                                            modifier = Modifier
+                                                                .size(32.dp)
+                                                                .clip(RoundedCornerShape(4.dp))
+                                                        )
+                                                    } else {
+                                                        Surface(
+                                                            shape = RoundedCornerShape(4.dp),
+                                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Box(contentAlignment = Alignment.Center) {
+                                                                Icon(
+                                                                    Icons.Filled.Diamond,
+                                                                    contentDescription = null,
+                                                                    tint = MaterialTheme.colorScheme.primary,
+                                                                    modifier = Modifier.size(16.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Column {
+                                                        Text(
+                                                            item.name,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            fontSize = 13.sp,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                        Text(
+                                                            formatBRL(item.price),
+                                                            fontSize = 11.sp,
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+                                                Text(
+                                                    text = if (cannotSell) "Esgotado" else "${item.stockQuantity} un.",
+                                                    fontSize = 12.sp,
+                                                    color = if (cannotSell) Color(0xFFEF4444) else MaterialTheme.colorScheme.secondary,
+                                                    modifier = Modifier.weight(0.7f),
+                                                    textAlign = TextAlign.End
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            if (!cannotSell) {
+                                                val existingIndex = cartItems.indexOfFirst { it.item.id == item.id }
+                                                if (existingIndex >= 0) {
+                                                    val existing = cartItems[existingIndex]
+                                                    val newQty = Math.min(item.stockQuantity, existing.quantity + 1)
+                                                    cartItems = cartItems.toMutableList().apply {
+                                                        set(existingIndex, existing.copy(quantity = newQty))
+                                                    }
+                                                } else {
+                                                    cartItems = cartItems + CartItem(item = item, quantity = 1, discount = 0.0)
+                                                }
+                                                searchItemQuery = ""
+                                                expandedDropdown = false
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        // Finalize transaction button
-        Button(
-            onClick = {
-                if (cartItems.isNotEmpty()) {
-                    val finalSalesChannel = if (isCustomSalesChannel) customSalesChannelText.ifEmpty { "Outros" } else selectedSalesChannel
-                    viewModel.registerMultiItemSale(
-                        itemsWithDetails = cartItems.map { Triple(it.item, it.quantity, it.discount) },
-                        paymentMethod = selectedPaymentMethod,
-                        salesChannel = finalSalesChannel
-                    )
-                    onSaleSuccess()
+            // Cart items view
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Itens do Pedido (${cartItems.size})", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        if (cartItems.isNotEmpty()) {
+                            TextButton(onClick = { cartItems = emptyList(); typedDiscounts.clear() }) {
+                                Text("Limpar Carrinho", color = Color(0xFFEF4444), fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    if (cartItems.isEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ShoppingBag,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "O carrinho está vazio",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                "Selecione joias acima para iniciar o pedido",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            cartItems.forEach { cartItem ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (cartItem.item.imageUri != null) {
+                                        AsyncImage(
+                                            model = cartItem.item.imageUri,
+                                            contentDescription = cartItem.item.name,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                        )
+                                    } else {
+                                        Surface(
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                            modifier = Modifier.size(48.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    Icons.Filled.Diamond,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            cartItem.item.name,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            "Material: ${cartItem.item.material}",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                        Text(
+                                            "${formatBRL(cartItem.item.price)} un",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    Column(
+                                        horizontalAlignment = Alignment.End,
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                cartItems = cartItems - cartItem
+                                                typedDiscounts.remove(cartItem.item.id)
+                                            },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Delete,
+                                                contentDescription = "Remover do carrinho",
+                                                tint = Color(0xFFEF4444),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            IconButton(
+                                                onClick = {
+                                                    if (cartItem.quantity > 1) {
+                                                        cartItems = cartItems.map {
+                                                            if (it.item.id == cartItem.item.id) it.copy(quantity = it.quantity - 1) else it
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .background(MaterialTheme.colorScheme.background, CircleShape)
+                                            ) {
+                                                Icon(Icons.Filled.Remove, contentDescription = "Menos", modifier = Modifier.size(14.dp))
+                                            }
+
+                                            Text(
+                                                text = "${cartItem.quantity}",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                modifier = Modifier.width(20.dp),
+                                                textAlign = TextAlign.Center
+                                            )
+
+                                            IconButton(
+                                                onClick = {
+                                                    if (cartItem.quantity < cartItem.item.stockQuantity) {
+                                                        cartItems = cartItems.map {
+                                                            if (it.item.id == cartItem.item.id) it.copy(quantity = it.quantity + 1) else it
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .background(MaterialTheme.colorScheme.background, CircleShape)
+                                            ) {
+                                                Icon(Icons.Filled.Add, contentDescription = "Mais", modifier = Modifier.size(14.dp))
+                                            }
+                                        }
+
+                                        val currentDiscountInput = typedDiscounts[cartItem.item.id] ?: if (cartItem.discount > 0.0) cartItem.discount.toString() else ""
+                                        OutlinedTextField(
+                                            value = currentDiscountInput,
+                                            onValueChange = { input ->
+                                                if (input.isEmpty() || input.toDoubleOrNull() != null) {
+                                                    typedDiscounts[cartItem.item.id] = input
+                                                    val discountVal = input.toDoubleOrNull() ?: 0.0
+                                                    val maxAllowedDiscount = cartItem.item.price * cartItem.quantity
+                                                    cartItems = cartItems.map {
+                                                        if (it.item.id == cartItem.item.id) {
+                                                            it.copy(discount = Math.min(maxAllowedDiscount, discountVal))
+                                                        } else it
+                                                    }
+                                                }
+                                            },
+                                            placeholder = { Text("Desc. R$", fontSize = 10.sp) },
+                                            singleLine = true,
+                                            textStyle = TextStyle(fontSize = 11.sp),
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                            modifier = Modifier
+                                                .width(90.dp)
+                                                .height(44.dp),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            },
-            enabled = cartItems.isNotEmpty() && total >= 0.0,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .testTag("submit_sale_button"),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(Icons.Filled.CheckCircle, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Concluir e Emitir Venda", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
+
+            // Financial & Payment details Cards
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("2. Configurar Pagamento", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        paymentOptions.forEach { method ->
+                            val isSelected = selectedPaymentMethod == method
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedPaymentMethod = method },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                border = BorderStroke(1.dp, if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                            ) {
+                                Text(
+                                    text = method,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(vertical = 10.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+
+                    Column(modifier = Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Canal de Vendas", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+
+                        if (isCustomSalesChannel) {
+                            OutlinedTextField(
+                                value = customSalesChannelText,
+                                		onValueChange = { customSalesChannelText = it },
+                                label = { Text("Digitar Canal de Vendas") },
+                                placeholder = { Text("Ex: TikTok Shop, Pinterest...") },
+                                trailingIcon = {
+                                    IconButton(onClick = { isCustomSalesChannel = false }) {
+                                        Icon(Icons.Filled.Close, contentDescription = "Lista")
+                                    }
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(salesChannels) { channel ->
+                                    val isSelected = selectedSalesChannel == channel
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = {
+                                            if (channel == "+ Outro Canal") {
+                                                isCustomSalesChannel = true
+                                            } else {
+                                                selectedSalesChannel = channel
+                                            }
+                                        },
+                                        label = { Text(channel) },
+                                        leadingIcon = if (isSelected) {
+                                            { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                        } else {
+                                            null
+                                        },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                            selectedLabelColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Sales Checkout calculation Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Resumo do Pedido", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.primary)
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Subtotal", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+                        Text(formatBRL(subtotal), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Desconto", color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+                        Text("- " + formatBRL(totalDiscount), color = Color(0xFFEF4444), fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Divider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), modifier = Modifier.padding(vertical = 4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("VALOR TOTAL", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+                        Text(
+                            formatBRL(total),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // Finalize transaction button
+            Button(
+                onClick = {
+                    if (cartItems.isNotEmpty()) {
+                        val finalSalesChannel = if (isCustomSalesChannel) customSalesChannelText.ifEmpty { "Outros" } else selectedSalesChannel
+                        viewModel.registerMultiItemSale(
+                            itemsWithDetails = cartItems.map { Triple(it.item, it.quantity, it.discount) },
+                            paymentMethod = selectedPaymentMethod,
+                            salesChannel = finalSalesChannel
+                        )
+                        onSaleSuccess()
+                    }
+                },
+                enabled = cartItems.isNotEmpty() && total >= 0.0,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .testTag("submit_sale_button"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Concluir e Emitir Venda", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -1830,220 +2630,463 @@ fun ReportsTabScreen(
             )
         }
 
-        // Financial Overview Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(2.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Desempenho Comercial Total", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val isTablet = configuration.screenWidthDp >= 600
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("Faturamento Histórico", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
-                        Text(formatBRL(totalRevenue), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Lucratividade Real", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
-                        Text(formatBRL(realProfit), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color(0xFF10B981))
-                    }
-                }
-
-                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+        if (isTablet) {
+            // First Row: Financial Overview & Potential Inventory Assets
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Financial Overview Card
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Column {
-                        Text("Margem de Lucro Média", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
-                        Text(
-                            text = "%.1f%%".format(profitPercentage),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp,
-                            color = Color(0xFFDFB15B)
-                        )
-                    }
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Desempenho Comercial Total", fontWeight = FontWeight.Bold, fontSize = 15.sp)
 
-                    Surface(
-                        shape = RoundedCornerShape(100.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                    ) {
-                        Text(
-                            text = "Nuvemshop Analytics",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-            }
-        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column {
+                                Text("Faturamento Histórico", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                                Text(formatBRL(totalRevenue), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Lucratividade Real", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                                Text(formatBRL(realProfit), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color(0xFF10B981))
+                            }
+                        }
 
-        // Potential Inventory assets Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Balanço Patrimonial do Estoque", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Custo Total Acumulado", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
-                        Text(formatBRL(inventoryTotalCost), fontWeight = FontWeight.Black, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Faturamento Potencial", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
-                        Text(formatBRL(inventoryPotentialRevenue), fontWeight = FontWeight.Black, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-
-                // Bar meter
-                val progress = if (inventoryPotentialRevenue > 0) (inventoryTotalCost / inventoryPotentialRevenue).toFloat() else 0f
-                LinearProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                )
-
-                Text(
-                    text = "Suas peças valem ${formatBRL(potentialProfit)} a mais do que o custo de fabricação ou compra.",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-        }
-
-        // Payment Methods split Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Métodos de Pagamento Utilizados", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-
-                val maxMethodVal = listOf(pixValue, creditValue, debitValue, cashValue).maxOrNull() ?: 1.0
-                val safeMax = if (maxMethodVal == 0.0) 1.0 else maxMethodVal
-
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    PaymentProgressRow("Pix", pixValue, safeMax)
-                    PaymentProgressRow("Cartão de Crédito", creditValue, safeMax)
-                    PaymentProgressRow("Cartão de Débito", debitValue, safeMax)
-                    PaymentProgressRow("Dinheiro", cashValue, safeMax)
-                }
-            }
-        }
-
-        // Historical Sales journal
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "Diário de Transações Recentes",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            if (sales.isEmpty()) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "Nenhuma venda gravada até o momento.",
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                sales.forEach { sale ->
-                    val dateFormatted = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("pt", "BR")).format(Date(sale.timestamp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                    ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text("Margem de Lucro Média", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                                Text(
+                                    text = "%.1f%%".format(profitPercentage),
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFFDFB15B)
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(100.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                            ) {
+                                Text(
+                                    text = "Nuvemshop Analytics",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Potential Inventory assets Card
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Balanço Patrimonial do Estoque", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1.3f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        sale.jewelryItemName,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f, fill = false)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = when (sale.salesChannel) {
-                                            "Nuvemshop" -> Color(0xFFE0F2FE)
-                                            "WhatsApp" -> Color(0xFFDCFCE7)
-                                            "Instagram" -> Color(0xFFFCE7F3)
-                                            "Loja Física" -> Color(0xFFFEF3C7)
-                                            else -> Color(0xFFF3F4F6)
-                                        },
-                                        contentColor = when (sale.salesChannel) {
-                                            "Nuvemshop" -> Color(0xFF0369A1)
-                                            "WhatsApp" -> Color(0xFF15803D)
-                                            "Instagram" -> Color(0xFFBE185D)
-                                            "Loja Física" -> Color(0xFFB45309)
-                                            else -> Color(0xFF374151)
+                            Column {
+                                Text("Custo Total Acumulado", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
+                                Text(formatBRL(inventoryTotalCost), fontWeight = FontWeight.Black, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Faturamento Potencial", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
+                                Text(formatBRL(inventoryPotentialRevenue), fontWeight = FontWeight.Black, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+
+                        // Bar meter
+                        val progress = if (inventoryPotentialRevenue > 0) (inventoryTotalCost / inventoryPotentialRevenue).toFloat() else 0f
+                        LinearProgressIndicator(
+                            progress = progress,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        )
+
+                        Text(
+                            text = "Suas joias valem ${formatBRL(potentialProfit)} a mais do que o custo de fabricação/compra.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+            }
+
+            // Second Row: Payment split & Recent Transactions on tablet
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Payment Methods split Card
+                Card(
+                    modifier = Modifier.weight(0.9f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Métodos de Pagamento Utilizados", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                        val maxMethodVal = listOf(pixValue, creditValue, debitValue, cashValue).maxOrNull() ?: 1.0
+                        val safeMax = if (maxMethodVal == 0.0) 1.0 else maxMethodVal
+
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            PaymentProgressRow("Pix", pixValue, safeMax)
+                            PaymentProgressRow("Cartão de Crédito", creditValue, safeMax)
+                            PaymentProgressRow("Cartão de Débito", debitValue, safeMax)
+                            PaymentProgressRow("Dinheiro", cashValue, safeMax)
+                        }
+                    }
+                }
+
+                // Recent Transactions
+                Column(
+                    modifier = Modifier.weight(1.1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "Diário de Transações Recentes",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    if (sales.isEmpty()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                "Nenhuma venda gravada até o momento.",
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(16.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        sales.forEach { sale ->
+                            val dateFormatted = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("pt", "BR")).format(Date(sale.timestamp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1.3f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                sale.jewelryItemName,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = when (sale.salesChannel) {
+                                                    "Nuvemshop" -> Color(0xFFE0F2FE)
+                                                    "WhatsApp" -> Color(0xFFDCFCE7)
+                                                    "Instagram" -> Color(0xFFFCE7F3)
+                                                    "Loja Física" -> Color(0xFFFEF3C7)
+                                                    else -> Color(0xFFF3F4F6)
+                                                },
+                                                contentColor = when (sale.salesChannel) {
+                                                    "Nuvemshop" -> Color(0xFF0369A1)
+                                                    "WhatsApp" -> Color(0xFF15803D)
+                                                    "Instagram" -> Color(0xFFBE185D)
+                                                    "Loja Física" -> Color(0xFFB45309)
+                                                    else -> Color(0xFF374151)
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = sale.salesChannel,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                                )
+                                            }
                                         }
-                                    ) {
                                         Text(
-                                            text = sale.salesChannel,
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                            "Qtde: ${sale.quantity} un. | ${sale.paymentMethod}",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                        Text(
+                                            dateFormatted,
+                                            fontSize = 10.sp,
+                                            color = MaterialTheme.colorScheme.outline
                                         )
                                     }
+                                    Column(modifier = Modifier.weight(0.7f), horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            formatBRL(sale.totalPrice),
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 14.sp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        if (sale.discount > 0.0) {
+                                            Text(
+                                                "Desconto: " + formatBRL(sale.discount),
+                                                fontSize = 10.sp,
+                                                color = Color(0xFFEF4444)
+                                            )
+                                        }
+                                    }
                                 }
-                                Text(
-                                    "Qtde: ${sale.quantity} un. | ${sale.paymentMethod}",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.secondary
-                                )
-                                Text(
-                                    dateFormatted,
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.outline
-                                )
                             }
-                            Column(modifier = Modifier.weight(0.7f), horizontalAlignment = Alignment.End) {
-                                Text(
-                                    formatBRL(sale.totalPrice),
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                if (sale.discount > 0.0) {
+                        }
+                    }
+                }
+            }
+        } else {
+            // Standard Mobile (Vertical stream layout)
+            // Financial Overview Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Desempenho Comercial Total", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("Faturamento Histórico", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                            Text(formatBRL(totalRevenue), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Lucratividade Real", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                            Text(formatBRL(realProfit), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color(0xFF10B981))
+                        }
+                    }
+
+                    Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text("Margem de Lucro Média", fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                            Text(
+                                text = "%.1f%%".format(profitPercentage),
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp,
+                                color = Color(0xFFDFB15B)
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(100.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                        ) {
+                            Text(
+                                text = "Nuvemshop Analytics",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Potential Inventory assets Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Balanço Patrimonial do Estoque", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Custo Total Acumulado", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
+                            Text(formatBRL(inventoryTotalCost), fontWeight = FontWeight.Black, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Faturamento Potencial", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
+                            Text(formatBRL(inventoryPotentialRevenue), fontWeight = FontWeight.Black, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+
+                    // Bar meter
+                    val progress = if (inventoryPotentialRevenue > 0) (inventoryTotalCost / inventoryPotentialRevenue).toFloat() else 0f
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    )
+
+                    Text(
+                        text = "Suas joias valem ${formatBRL(potentialProfit)} a mais do que o custo de fabricação ou compra.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+
+            // Payment Methods split Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Métodos de Pagamento Utilizados", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+
+                    val maxMethodVal = listOf(pixValue, creditValue, debitValue, cashValue).maxOrNull() ?: 1.0
+                    val safeMax = if (maxMethodVal == 0.0) 1.0 else maxMethodVal
+
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        PaymentProgressRow("Pix", pixValue, safeMax)
+                        PaymentProgressRow("Cartão de Crédito", creditValue, safeMax)
+                        PaymentProgressRow("Cartão de Débito", debitValue, safeMax)
+                        PaymentProgressRow("Dinheiro", cashValue, safeMax)
+                    }
+                }
+            }
+
+            // Historical Sales journal
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Diário de Transações Recentes",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                if (sales.isEmpty()) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "Nenhuma venda gravada até o momento.",
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    sales.forEach { sale ->
+                        val dateFormatted = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("pt", "BR")).format(Date(sale.timestamp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1.3f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            sale.jewelryItemName,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f, fill = false)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = when (sale.salesChannel) {
+                                                "Nuvemshop" -> Color(0xFFE0F2FE)
+                                                "WhatsApp" -> Color(0xFFDCFCE7)
+                                                "Instagram" -> Color(0xFFFCE7F3)
+                                                "Loja Física" -> Color(0xFFFEF3C7)
+                                                else -> Color(0xFFF3F4F6)
+                                            },
+                                            contentColor = when (sale.salesChannel) {
+                                                "Nuvemshop" -> Color(0xFF0369A1)
+                                                "WhatsApp" -> Color(0xFF15803D)
+                                                "Instagram" -> Color(0xFFBE185D)
+                                                "Loja Física" -> Color(0xFFB45309)
+                                                else -> Color(0xFF374151)
+                                            }
+                                        ) {
+                                            Text(
+                                                text = sale.salesChannel,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
                                     Text(
-                                        "Desconto: " + formatBRL(sale.discount),
-                                        fontSize = 10.sp,
-                                        color = Color(0xFFEF4444)
+                                        "Qtde: ${sale.quantity} un. | ${sale.paymentMethod}",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.secondary
                                     )
+                                    Text(
+                                        dateFormatted,
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(0.7f), horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        formatBRL(sale.totalPrice),
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    if (sale.discount > 0.0) {
+                                        Text(
+                                            "Desconto: " + formatBRL(sale.discount),
+                                            fontSize = 10.sp,
+                                            color = Color(0xFFEF4444)
+                                        )
+                                    }
                                 }
                             }
                         }
