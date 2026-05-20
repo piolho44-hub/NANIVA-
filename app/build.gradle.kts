@@ -1,4 +1,7 @@
 plugins {
+
+secrets {
+    propertiesFileName = ".env"
     defaultPropertiesFileName = ".env.example"
 }
 
