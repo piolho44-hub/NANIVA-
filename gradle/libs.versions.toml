@@ -3,6 +3,18 @@
 agp = "8.7.3"
 kotlin = "2.0.21"
 
+googleDevtoolsKsp = "2.0.21-1.0.28"
+
+composeBom = "2024.10.01"
+
+navigationCompose = "2.8.5"
+
+roomRuntime = "2.6.1"
+roomKtx = "2.6.1"
+roomCompiler = "2.6.1"
+
+firebaseBom = "33.7.0"
+
 coreKtx = "1.15.0"
 
 junit = "4.13.2"
@@ -15,16 +27,6 @@ lifecycleViewmodelCompose = "2.8.7"
 lifecycleRuntimeCompose = "2.8.7"
 
 activityCompose = "1.9.3"
-
-composeBom = "2024.10.01"
-
-googleDevtoolsKsp = "2.0.21-1.0.28"
-
-navigationCompose = "2.8.5"
-
-roomRuntime = "2.6.1"
-roomKtx = "2.6.1"
-roomCompiler = "2.6.1"
 
 kotlinxCoroutinesTest = "1.9.0"
 
@@ -59,8 +61,6 @@ datastorePreferences = "1.1.1"
 robolectric = "4.14.1"
 
 roborazzi = "1.26.0"
-
-firebaseBom = "33.7.0"
 
 secretsGradlePlugin = "2.0.1"
 
