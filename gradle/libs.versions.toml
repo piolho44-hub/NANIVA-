@@ -1,54 +1,88 @@
 [versions]
 
+# =========================
+# ANDROID / KOTLIN
+# =========================
+
 agp = "8.7.3"
 kotlin = "2.0.21"
-
 googleDevtoolsKsp = "2.0.21-1.0.28"
+
+# =========================
+# COMPOSE
+# =========================
 
 composeBom = "2024.10.01"
 
-navigationCompose = "2.8.5"
-
-roomRuntime = "2.6.1"
-roomKtx = "2.6.1"
-roomCompiler = "2.6.1"
-
-firebaseBom = "33.7.0"
+# =========================
+# CORE
+# =========================
 
 coreKtx = "1.15.0"
 
+# =========================
+# TESTS
+# =========================
+
 junit = "4.13.2"
 junitVersion = "1.2.1"
-
 espressoCore = "3.6.1"
+
+# =========================
+# LIFECYCLE
+# =========================
 
 lifecycleRuntimeKtx = "2.8.7"
 lifecycleViewmodelCompose = "2.8.7"
 lifecycleRuntimeCompose = "2.8.7"
 
+# =========================
+# ACTIVITY
+# =========================
+
 activityCompose = "1.9.3"
 
+# =========================
+# NAVIGATION
+# =========================
+
+navigationCompose = "2.8.5"
+
+# =========================
+# ROOM
+# =========================
+
+roomRuntime = "2.6.1"
+roomKtx = "2.6.1"
+roomCompiler = "2.6.1"
+
+# =========================
+# COROUTINES
+# =========================
+
 kotlinxCoroutinesTest = "1.9.0"
+kotlinxCoroutinesAndroid = "1.9.0"
+kotlinxCoroutinesCore = "1.9.0"
+
+# =========================
+# ANDROID TEST
+# =========================
 
 core = "1.6.1"
 runner = "1.6.2"
 
+# =========================
+# IMAGE
+# =========================
+
 coilCompose = "2.7.0"
+
+# =========================
+# RETROFIT / MOSHI
+# =========================
 
 retrofit = "2.11.0"
 converterMoshi = "2.11.0"
-
-kotlinxCoroutinesAndroid = "1.9.0"
-kotlinxCoroutinesCore = "1.9.0"
-
-accompanistPermissions = "0.36.0"
-
-playServicesLocation = "21.3.0"
-
-cameraCamera2 = "1.4.1"
-cameraLifecycle = "1.4.1"
-cameraView = "1.4.1"
-cameraCore = "1.4.1"
 
 loggingInterceptor = "4.12.0"
 okhttp = "4.12.0"
@@ -56,17 +90,63 @@ okhttp = "4.12.0"
 moshiKotlin = "1.15.1"
 moshiKotlinCodegen = "1.15.1"
 
+# =========================
+# ACCOMPANIST
+# =========================
+
+accompanistPermissions = "0.36.0"
+
+# =========================
+# GOOGLE LOCATION
+# =========================
+
+playServicesLocation = "21.3.0"
+
+# =========================
+# CAMERA X
+# =========================
+
+cameraCamera2 = "1.4.1"
+cameraLifecycle = "1.4.1"
+cameraView = "1.4.1"
+cameraCore = "1.4.1"
+
+# =========================
+# DATASTORE
+# =========================
+
 datastorePreferences = "1.1.1"
 
-robolectric = "4.14.1"
+# =========================
+# TEST / SCREENSHOT
+# =========================
 
+robolectric = "4.14.1"
 roborazzi = "1.26.0"
+
+# =========================
+# FIREBASE
+# =========================
+
+firebaseBom = "33.7.0"
+
+# =========================
+# SECRETS
+# =========================
 
 secretsGradlePlugin = "2.0.1"
 
 [libraries]
 
+# =========================
+# CORE
+# =========================
+
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+
+# =========================
+# TESTS
+# =========================
 
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
@@ -74,13 +154,25 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
+# =========================
+# LIFECYCLE
+# =========================
+
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 
+# =========================
+# ACTIVITY
+# =========================
+
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+
+# =========================
+# COMPOSE
+# =========================
 
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 
@@ -102,7 +194,15 @@ androidx-compose-material-icons-core = { group = "androidx.compose.material", na
 
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
+# =========================
+# NAVIGATION
+# =========================
+
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+
+# =========================
+# ROOM
+# =========================
 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
 
@@ -110,25 +210,69 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomCompiler" }
 
+# =========================
+# COROUTINES
+# =========================
+
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
-
-androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
-
-androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
-
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
-
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-
-converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
 
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 
+# =========================
+# ANDROID TEST
+# =========================
+
+androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
+
+androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
+
+# =========================
+# IMAGE
+# =========================
+
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
+
+# =========================
+# RETROFIT
+# =========================
+
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+
+converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
+
+# =========================
+# OKHTTP
+# =========================
+
+logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
+
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+# =========================
+# MOSHI
+# =========================
+
+moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshiKotlin" }
+
+moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
+
+# =========================
+# ACCOMPANIST
+# =========================
+
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
 
+# =========================
+# LOCATION
+# =========================
+
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+
+# =========================
+# CAMERA X
+# =========================
 
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCamera2" }
 
@@ -138,15 +282,15 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraCore" }
 
-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "loggingInterceptor" }
-
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-
-moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshiKotlin" }
-
-moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
+# =========================
+# DATASTORE
+# =========================
 
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+
+# =========================
+# TESTS
+# =========================
 
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
@@ -156,9 +300,17 @@ roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi
 
 roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 
+# =========================
+# FIREBASE
+# =========================
+
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 
 firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
+
+# =========================
+# PLUGINS
+# =========================
 
 [plugins]
 
